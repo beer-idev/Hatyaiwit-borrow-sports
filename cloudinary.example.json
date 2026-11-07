@@ -1,0 +1,4 @@
+{
+  "CLOUDINARY_CLOUD_NAME": "ใส่-cloud-name",
+  "CLOUDINARY_UPLOAD_PRESET": "ใส่-unsigned-upload-preset"
+}

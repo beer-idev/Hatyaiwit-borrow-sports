@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "th.ac.hatyaiwit.gearshare_school",
+      "sha256_cert_fingerprints": [
+        "29:C5:B6:1A:35:87:AD:46:35:88:39:64:3C:B5:D6:91:4F:BE:2A:B6:F7:CE:A6:74:4A:72:F1:50:CA:B6:C9:CF"
+      ]
+    }
+  }
+]

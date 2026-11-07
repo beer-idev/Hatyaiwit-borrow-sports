@@ -1,0 +1,140 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSchoolUser() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.matches('^[A-Za-z0-9._%+\\-]+@hatyaiwit[.]ac[.]th$');
+    }
+
+    function isOwner(ownerId) {
+      return isSchoolUser() && request.auth.uid == ownerId;
+    }
+
+    function validUser(data) {
+      return data.keys().hasAll(['email', 'name', 'schoolId', 'role'])
+        && data.keys().hasOnly(['email', 'name', 'schoolId', 'role'])
+        && data.email is string
+        && data.name is string
+        && data.schoolId is string
+        && data.role in ['student', 'teacher'];
+    }
+
+    function validEquipment(data) {
+      return data.keys().hasAll([
+          'code', 'name', 'category', 'ownerId', 'ownerName',
+          'available', 'note', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'code', 'name', 'category', 'ownerId', 'ownerName',
+          'available', 'note', 'imageUrl', 'updatedAt'
+        ])
+        && data.code is string
+        && data.name is string
+        && data.category is string
+        && data.ownerId is string
+        && data.ownerName is string
+        && data.available is bool
+        && data.note is string
+        && (!data.keys().hasAny(['imageUrl']) || data.imageUrl is string)
+        && data.updatedAt is timestamp;
+    }
+
+    function validBooking(data) {
+      return data.keys().hasAll([
+          'equipmentId', 'equipmentName', 'equipmentCode',
+          'ownerId', 'ownerName', 'borrowerId', 'borrowerName',
+          'borrowerSchoolId', 'startAt', 'endAt', 'status',
+          'purpose', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'equipmentId', 'equipmentName', 'equipmentCode',
+          'ownerId', 'ownerName', 'borrowerId', 'borrowerName',
+          'borrowerSchoolId', 'startAt', 'endAt', 'status',
+          'purpose', 'createdAt', 'updatedAt'
+        ])
+        && data.equipmentId is string
+        && data.ownerId is string
+        && data.borrowerId is string
+        && data.startAt is timestamp
+        && data.endAt is timestamp
+        && data.endAt > data.startAt
+        && data.status in ['pending', 'approved', 'rejected', 'returned'];
+    }
+
+    function validStatusTransition() {
+      return (resource.data.status == 'pending'
+          && request.resource.data.status in ['approved', 'rejected'])
+        || (resource.data.status == 'approved'
+          && request.resource.data.status == 'returned');
+    }
+
+    match /users/{userId} {
+      allow read: if isSchoolUser();
+
+      // INSERT โปรไฟล์ของตัวเองหลังสมัครสมาชิก
+      allow create: if isSchoolUser()
+        && request.auth.uid == userId
+        && request.resource.data.email == request.auth.token.email
+        && validUser(request.resource.data);
+
+      // UPDATE โปรไฟล์ โดยห้ามเปลี่ยนอีเมลประจำบัญชี
+      allow update: if isSchoolUser()
+        && request.auth.uid == userId
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['name', 'schoolId', 'role'])
+        && validUser(request.resource.data);
+
+      allow delete: if false;
+    }
+
+    match /equipment/{equipmentId} {
+      allow read: if isSchoolUser();
+
+      // INSERT อุปกรณ์ใหม่ได้ทั้งนักเรียนและครู
+      allow create: if isOwner(request.resource.data.ownerId)
+        && request.resource.data.available == true
+        && validEquipment(request.resource.data);
+
+      // UPDATE รายละเอียด/สถานะอุปกรณ์ได้เฉพาะเจ้าของ
+      allow update: if isOwner(resource.data.ownerId)
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'code', 'name', 'category', 'ownerName',
+          'available', 'note', 'imageUrl', 'updatedAt'
+        ])
+        && validEquipment(request.resource.data);
+
+      allow delete: if isOwner(resource.data.ownerId);
+    }
+
+    match /bookings/{bookingId} {
+      allow read: if isSchoolUser()
+        && (request.auth.uid == resource.data.borrowerId
+          || request.auth.uid == resource.data.ownerId);
+
+      // INSERT คำขอยืมได้เฉพาะในชื่อของผู้ที่ล็อกอิน
+      allow create: if isSchoolUser()
+        && request.resource.data.borrowerId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.ownerId == get(/databases/$(database)/documents/equipment/$(request.resource.data.equipmentId)).data.ownerId
+        && request.resource.data.borrowerId != request.resource.data.ownerId
+        && request.resource.data.createdAt == request.time
+        && validBooking(request.resource.data);
+
+      // UPDATE สถานะได้เฉพาะเจ้าของ และเป็นไปตามลำดับที่กำหนด
+      allow update: if isOwner(resource.data.ownerId)
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.borrowerId == resource.data.borrowerId
+        && request.resource.data.equipmentId == resource.data.equipmentId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && request.resource.data.updatedAt == request.time
+        && validStatusTransition()
+        && validBooking(request.resource.data);
+
+      allow delete: if false;
+    }
+  }
+}
