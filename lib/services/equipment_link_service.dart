@@ -3,7 +3,7 @@ class EquipmentLinkService {
 
   static const String webOrigin = String.fromEnvironment(
     'APP_WEB_ORIGIN',
-    defaultValue: 'https://booking-sport-73f50.web.app',
+    defaultValue: 'https://hatyaiwit-borrow.vercel.app',
   );
 
   static Uri equipmentUri(String equipmentId) {

@@ -34,7 +34,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
-                    android:host="booking-sport-73f50.web.app"
+                    android:host="hatyaiwit-borrow.vercel.app"
                     android:pathPrefix="/equipment/" />
             </intent-filter>
         </activity>

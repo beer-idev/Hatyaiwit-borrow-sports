@@ -172,7 +172,7 @@ flutter build web --release
 QR อุปกรณ์ใหม่จะเก็บลิงก์รูปแบบนี้:
 
 ```text
-https://booking-sport-73f50.web.app/equipment/<equipmentId>
+https://hatyaiwit-borrow.vercel.app/equipment/<equipmentId>
 ```
 
 - Android ที่ติดตั้งแอปและยืนยัน App Link สำเร็จจะเปิดรายละเอียดในแอป
@@ -180,14 +180,15 @@ https://booking-sport-73f50.web.app/equipment/<equipmentId>
 - QR แบบเก่าที่เก็บเฉพาะรหัสอุปกรณ์ยังสแกนในระบบได้
 - กล้องบนเว็บต้องเปิดผ่าน HTTPS หรือ `localhost` และผู้ใช้ต้องอนุญาตสิทธิ์กล้อง
 
-Build และ deploy เว็บไป Firebase Hosting:
+เว็บ production deploy ผ่าน Vercel ที่ `https://hatyaiwit-borrow.vercel.app` โดยใช้ `vercel.json` rewrite route `/equipment/:id` กลับเข้า Flutter Web:
 
 ```powershell
-flutter build web --release
-firebase.cmd deploy --only hosting
+flutter build web --release `
+  --dart-define=APP_WEB_ORIGIN=https://hatyaiwit-borrow.vercel.app `
+  --dart-define-from-file=cloudinary.json
 ```
 
-ไฟล์ `web/.well-known/assetlinks.json` ผูกโดเมนกับ package `th.ac.hatyaiwit.gearshare_school` และคีย์ที่ใช้เซ็น APK ปัจจุบัน หากเปลี่ยน signing key หรือใช้ Google Play App Signing ต้องเพิ่ม SHA-256 fingerprint ของคีย์ใหม่ในไฟล์นี้แล้ว deploy เว็บอีกครั้ง
+ไฟล์ `web/.well-known/assetlinks.json` ผูกโดเมน Vercel กับ package `th.ac.hatyaiwit.gearshare_school` และคีย์ที่ใช้เซ็น APK ปัจจุบัน หากเปลี่ยน signing key หรือใช้ Google Play App Signing ต้องเพิ่ม SHA-256 fingerprint ของคีย์ใหม่ในไฟล์นี้แล้ว deploy เว็บอีกครั้ง
 
 หากเปลี่ยนไปใช้ custom domain ให้แก้ host ใน `AndroidManifest.xml` และ build ด้วย:
 

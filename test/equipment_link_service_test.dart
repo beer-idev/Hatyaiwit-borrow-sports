@@ -6,7 +6,7 @@ void main() {
     test('builds a production web link for an equipment id', () {
       expect(
         EquipmentLinkService.equipmentUri('ball 01').toString(),
-        'https://booking-sport-73f50.web.app/equipment/ball%2001',
+        'https://hatyaiwit-borrow.vercel.app/equipment/ball%2001',
       );
     });
 
@@ -17,7 +17,7 @@ void main() {
       );
       expect(
         EquipmentLinkService.equipmentIdFromQr(
-          'https://booking-sport-73f50.web.app/equipment/abc123',
+          'https://hatyaiwit-borrow.vercel.app/equipment/abc123',
         ),
         'abc123',
       );
